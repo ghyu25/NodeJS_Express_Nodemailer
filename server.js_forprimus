@@ -6,29 +6,11 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+// Parse JSON bodies
 app.use(express.json());
+
+// Serve static files from /public
 app.use(express.static("public"));
-
-// Create a reusable Gmail transporter once (not inside the route)
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // Gmail requires secure connection on port 465
-  auth: {
-    user: process.env.EMAIL_USER, // your Gmail address
-    pass: process.env.EMAIL_PASS  // your 16‑char App Password
-  }
-});
-
-// Verify transporter on startup (optional but helpful)
-transporter.verify((err, success) => {
-  if (err) {
-    console.error("SMTP connection failed:", err);
-  } else {
-    console.log("SMTP server is ready to send emails.");
-  }
-});
 
 // Handle form submission
 app.post("/submit", async (req, res) => {
@@ -39,6 +21,24 @@ app.post("/submit", async (req, res) => {
   }
 
   try {
+    // SMTP transport for Primus.ca
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: true, // REQUIRED for port 465
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false // Primus servers sometimes require this
+      }
+    });
+
+    // Verify connection first (helps debug)
+    await transporter.verify();
+
+    // Send the email
     await transporter.sendMail({
       from: `"Form Demo" <${process.env.EMAIL_USER}>`,
       to: process.env.TARGET_EMAIL,
@@ -48,7 +48,8 @@ app.post("/submit", async (req, res) => {
 
     res.json({ message: "Email sent successfully!" });
   } catch (err) {
-    console.error("EMAIL SEND ERROR:", err);
+    console.error("SMTP ERROR DETAILS:");
+    console.error(err);
     res.status(500).json({ message: "Failed to send email." });
   }
 });
