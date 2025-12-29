@@ -1,18 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Email Demo</title>
+  <title>Contact Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      line-height: 1.6;
+    }
+    label { font-weight: bold; }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
 </head>
+
 <body>
   <h1>Contact Form</h1>
 
   <form id="contactForm">
-    <label>Name:</label><br />
-    <input type="text" id="name" required /><br /><br />
+    <label for="name">Name:</label>
+    <input type="text" id="name" required />
 
-    <label>Email:</label><br />
-    <input type="email" id="email" required /><br /><br />
+    <label for="email">Email:</label>
+    <input type="email" id="email" required />
 
     <button type="submit">Send</button>
   </form>
@@ -23,17 +53,32 @@
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const status = document.getElementById("status");
 
-      const res = await fetch("/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email })
-      });
+      status.textContent = "Sending...";
 
-      const data = await res.json();
-      document.getElementById("status").innerText = data.message;
+      try {
+        const res = await fetch("https://nodejs-express-nodemailer.onrender.com/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          status.style.color = "green";
+          status.textContent = data.message;
+        } else {
+          status.style.color = "red";
+          status.textContent = data.message || "Error sending email.";
+        }
+      } catch (err) {
+        status.style.color = "red";
+        status.textContent = "Network error — could not reach server.";
+      }
     });
   </script>
 </body>
