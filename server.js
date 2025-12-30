@@ -1,49 +1,23 @@
 import express from "express";
-import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { Resend } from "resend";
 
 dotenv.config();
 
 const app = express();
-
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// CORS (safe for local + Render)
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  next();
-});
-
-// Email Transporter (Gmail)
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-// Verify SMTP connection
-transporter.verify((err) => {
-  if (err) {
-    console.error("❌ SMTP connection failed:", err);
-  } else {
-    console.log("✅ SMTP server is ready to send emails.");
-  }
-});
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Form submission
+// Form submission route
 app.post("/submit", async (req, res) => {
   const { name, email } = req.body;
 
@@ -54,18 +28,22 @@ app.post("/submit", async (req, res) => {
   }
 
   try {
-    await transporter.sendMail({
-      from: `"Form Demo" <${process.env.EMAIL_USER}>`,
-      to: process.env.TARGET_EMAIL,
+    const data = await resend.emails.send({
+      from: "My App <onboarding@resend.dev>",   // No domain verification needed
+      to: process.env.TARGET_EMAIL.split(",").map(s => s.trim()),
       subject: "New Form Submission",
-      text: `Name: ${name}\nEmail: ${email}`
+      html: `
+        <h2>New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+      `
     });
 
-    console.log("✅ Email sent successfully.");
+    console.log("✅ Email sent:", data);
     res.json({ message: "Email sent successfully!" });
 
-  } catch (err) {
-    console.error("❌ EMAIL SEND ERROR:", err);
+  } catch (error) {
+    console.error("❌ Resend error:", error);
     res.status(500).json({ message: "Failed to send email." });
   }
 });

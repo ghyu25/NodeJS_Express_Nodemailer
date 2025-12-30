@@ -1,4 +1,6 @@
 node_modules/
 .env
 .env_forprimus
+.env_forgooglesmtp
 server.js_forprimus
+server.js_forgooglesmtp
