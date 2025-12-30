@@ -6,23 +6,19 @@ dotenv.config();
 
 const app = express();
 
-// -----------------------------
 // Middleware
-// -----------------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public")); // Serves your index.html
+app.use(express.static("public"));
 
-// Optional: allow cross‑origin requests (useful if form is hosted elsewhere)
+// CORS (safe for local + Render)
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
 
-// -----------------------------
 // Email Transporter (Gmail)
-// -----------------------------
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
@@ -33,7 +29,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Verify SMTP connection on startup
+// Verify SMTP connection
 transporter.verify((err) => {
   if (err) {
     console.error("❌ SMTP connection failed:", err);
@@ -42,16 +38,12 @@ transporter.verify((err) => {
   }
 });
 
-// -----------------------------
-// Routes
-// -----------------------------
-
-// Health check (useful for Render)
+// Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Handle form submission
+// Form submission
 app.post("/submit", async (req, res) => {
   const { name, email } = req.body;
 
@@ -78,9 +70,7 @@ app.post("/submit", async (req, res) => {
   }
 });
 
-// -----------------------------
-// Start Server
-// -----------------------------
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

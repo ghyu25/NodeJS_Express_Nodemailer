@@ -3,35 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Contact Form</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: 40px auto;
-      line-height: 1.6;
-    }
-    label { font-weight: bold; }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      font-size: 1rem;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    #status {
-      margin-top: 20px;
-      font-weight: bold;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -49,37 +21,6 @@
 
   <p id="status"></p>
 
-  <script>
-    document.getElementById("contactForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const status = document.getElementById("status");
-
-      status.textContent = "Sending...";
-
-      try {
-        const res = await fetch("https://nodejs-express-nodemailer.onrender.com/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          status.style.color = "green";
-          status.textContent = data.message;
-        } else {
-          status.style.color = "red";
-          status.textContent = data.message || "Error sending email.";
-        }
-      } catch (err) {
-        status.style.color = "red";
-        status.textContent = "Network error — could not reach server.";
-      }
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
